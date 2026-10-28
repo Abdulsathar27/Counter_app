@@ -222,4 +222,38 @@ void main() {
       },
     );
   });
+
+  group('CounterGoalChanged', () {
+    blocTest<CounterBloc, CounterState>(
+      'sets and persists the goal',
+      build: build,
+      seed: () => ready(const CounterEntity(count: 3)),
+      act: (bloc) => bloc.add(const CounterGoalChanged(33)),
+      expect: () => [ready(const CounterEntity(count: 3, goal: 33))],
+      verify: (_) => expect(repository.stored.goal, 33),
+    );
+
+    blocTest<CounterBloc, CounterState>(
+      'clamps an out-of-range goal',
+      build: build,
+      seed: () => ready(const CounterEntity(count: 3)),
+      act: (bloc) => bloc.add(const CounterGoalChanged(0)),
+      expect: () => [ready(const CounterEntity(count: 3, goal: 1))],
+    );
+
+    blocTest<CounterBloc, CounterState>(
+      'ignores a goal equal to the current one',
+      build: build,
+      seed: () => ready(const CounterEntity(count: 3, goal: 10)),
+      act: (bloc) => bloc.add(const CounterGoalChanged(10)),
+      expect: () => <CounterState>[],
+    );
+
+    test('progress fills towards the goal and stays full past it', () {
+      expect(ready(const CounterEntity(count: 0, goal: 4)).progress, 0);
+      expect(ready(const CounterEntity(count: 1, goal: 4)).progress, 0.25);
+      expect(ready(const CounterEntity(count: 4, goal: 4)).goalReached, isTrue);
+      expect(ready(const CounterEntity(count: 9, goal: 4)).progress, 1);
+    });
+  });
 }

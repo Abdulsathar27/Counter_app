@@ -30,6 +30,12 @@ class FakeCounterRepository implements CounterRepository {
     if (failSave) throw const StorageException('save failed');
     stored = stored.copyWith(vibrationEnabled: enabled);
   }
+
+  @override
+  Future<void> saveGoal(int goal) async {
+    if (failSave) throw const StorageException('save failed');
+    stored = stored.copyWith(goal: goal);
+  }
 }
 
 class FakeHapticsService implements HapticsService {

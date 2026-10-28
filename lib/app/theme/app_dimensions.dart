@@ -1,31 +1,33 @@
 import 'package:flutter/animation.dart';
 
-/// Layout, shape and motion tokens taken from the reference HTML.
+/// Layout, shape and motion tokens.
 abstract final class AppDimensions {
-  // Screen. The reference pads 92px from the top of the device, 44px of
-  // which belong to the status bar; the rest sits below the safe area.
+  // Screen.
   static const double screenTopPadding = 48;
 
   // Stage.
   static const double stageVerticalPadding = 32;
   static const double stageHorizontalPadding = 24;
-  static const double captionTopGap = 38;
+  static const double countButtonTopGap = 40;
 
-  // Counter and bezel.
-  static const double counterWidth = 238;
-  static const double counterHeight = 150;
-  static const double bezelPadding = 7;
-  static const double radiusOuter = 26;
-  static const double radiusInner = 18;
-  static const double counterPerspective = 640;
-  static const double hingeHeight = 3;
-  static const double digitHorizontalPadding = 16;
+  // Progress ring. The stroke is ~8% of the diameter, as in the design.
+  static const double ringDiameter = 240;
+  static const double ringStroke = 18;
+  static const double ringLabelGap = 6;
+
+  /// Horizontal room the number has inside the ring before it scales down.
+  static const double ringContentWidth = 168;
+
+  // Fingerprint count button.
+  static const double countButtonSize = 84;
+  static const double countButtonIconSize = 40;
+  static const double countButtonIconStroke = 1.5;
 
   // Controls.
   static const double controlSize = 56;
   static const double controlIconSize = 24;
   static const double controlIconStroke = 1.75;
-  static const double controlGap = 34;
+  static const double controlGap = 24;
   static const double controlsTopPadding = 24;
   static const double controlsHorizontalPadding = 32;
   static const double controlsBottomPadding = 58;
@@ -34,18 +36,18 @@ abstract final class AppDimensions {
   // Focus ring.
   static const double focusRingWidth = 2;
   static const double controlFocusOffset = 3;
-  static const double counterFocusOffset = 4;
 }
 
 abstract final class AppMotion {
-  /// `.flap--top` transition: transform .55s cubic-bezier(.34,.9,.3,1).
-  static const Duration flip = Duration(milliseconds: 550);
-  static const Curve flipCurve = Cubic(0.34, 0.9, 0.3, 1);
+  /// The ring easing to its new fill after each count or goal change.
+  static const Duration ring = Duration(milliseconds: 350);
+  static const Curve ringCurve = Curves.easeOutCubic;
 
-  /// Brightness the folding flap reaches at the hinge (`filter: brightness(.72)`).
-  static const double flapMinBrightness = 0.72;
-
-  /// `.ctrl` transition: transform .15s ease.
+  /// Button press: transform .15s ease.
   static const Duration press = Duration(milliseconds: 150);
   static const Curve pressCurve = Curves.ease;
+
+  /// Ripple that spreads from the touch point on the count button.
+  static const Duration ripple = Duration(milliseconds: 500);
+  static const Curve rippleCurve = Curves.easeOutCubic;
 }

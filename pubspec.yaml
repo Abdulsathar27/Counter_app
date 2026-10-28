@@ -1,5 +1,5 @@
 name: counter
-description: "MUSMILES — Flip Counter."
+description: "MUSMILES — Goal Counter."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -73,9 +73,6 @@ flutter:
           weight: 500
         - asset: assets/fonts/Switzer-Semibold.ttf
           weight: 600
-    - family: PinyonScript
-      fonts:
-        - asset: assets/fonts/PinyonScript-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

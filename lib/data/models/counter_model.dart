@@ -1,20 +1,24 @@
+import '../../core/constants/app_constants.dart';
 import '../../domain/entities/counter_entity.dart';
 
 /// Storage representation of [CounterEntity]. Sanitises whatever was on disk
-/// so corrupt or hand-edited values can never produce a negative count.
+/// so corrupt or hand-edited values can never produce a negative count or an
+/// out-of-range goal.
 class CounterModel extends CounterEntity {
-  const CounterModel({required super.count, super.undoHistory, super.vibrationEnabled});
+  const CounterModel({required super.count, super.undoHistory, super.vibrationEnabled, super.goal});
 
   factory CounterModel.fromEntity(CounterEntity entity) => CounterModel(
     count: entity.count,
     undoHistory: entity.undoHistory,
     vibrationEnabled: entity.vibrationEnabled,
+    goal: entity.goal,
   );
 
   factory CounterModel.fromStorage({
     required int? count,
     required List<String>? undoHistory,
     required bool? vibrationEnabled,
+    required int? goal,
   }) {
     final safeCount = (count == null || count < 0) ? 0 : count;
     final safeHistory = <int>[
@@ -25,11 +29,19 @@ class CounterModel extends CounterEntity {
       count: safeCount,
       undoHistory: List.unmodifiable(safeHistory),
       vibrationEnabled: vibrationEnabled ?? CounterEntity.initial.vibrationEnabled,
+      goal:
+          (goal == null || goal < AppConstants.minGoal || goal > AppConstants.maxGoal)
+              ? AppConstants.defaultGoal
+              : goal,
     );
   }
 
-  CounterEntity toEntity() =>
-      CounterEntity(count: count, undoHistory: undoHistory, vibrationEnabled: vibrationEnabled);
+  CounterEntity toEntity() => CounterEntity(
+    count: count,
+    undoHistory: undoHistory,
+    vibrationEnabled: vibrationEnabled,
+    goal: goal,
+  );
 
   List<String> get undoHistoryForStorage => [for (final value in undoHistory) '$value'];
 }

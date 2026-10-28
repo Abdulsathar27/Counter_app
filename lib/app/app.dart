@@ -20,7 +20,7 @@ class MusmilesApp extends StatelessWidget {
       child: MaterialApp(
         title: AppConstants.appTitle,
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
         initialRoute: AppRoutes.counter,
         routes: AppRoutes.routes,
       ),

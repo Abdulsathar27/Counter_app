@@ -69,7 +69,7 @@ class _CounterControlButtonState extends State<CounterControlButton> {
               transform: Matrix4.translationValues(0, _pressed ? 1 : 0, 0),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.canvas,
+                color: AppColors.surface,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.divider),
                 boxShadow: [

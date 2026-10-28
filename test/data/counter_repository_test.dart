@@ -19,17 +19,18 @@ void main() {
     expect(await repository.load(), CounterEntity.initial);
   });
 
-  test('restores a saved count, history and preference in a new instance', () async {
+  test('restores a saved count, history, preference and goal in a new instance', () async {
     final writer = await _repository();
     await writer.saveCount(const CounterEntity(count: 12, undoHistory: [10, 11]));
     await writer.saveVibrationEnabled(enabled: false);
+    await writer.saveGoal(33);
 
     // A fresh repository over the same storage simulates an app restart.
     final reader = await _repository();
 
     expect(
       await reader.load(),
-      const CounterEntity(count: 12, undoHistory: [10, 11], vibrationEnabled: false),
+      const CounterEntity(count: 12, undoHistory: [10, 11], vibrationEnabled: false, goal: 33),
     );
   });
 
@@ -37,6 +38,7 @@ void main() {
     SharedPreferences.setMockInitialValues({
       StorageKeys.count: -5,
       StorageKeys.undoHistory: ['3', 'oops', '-1', '4'],
+      StorageKeys.goal: 0,
     });
     final repository = await _repository();
 
@@ -45,5 +47,6 @@ void main() {
     expect(loaded.count, 0);
     expect(loaded.undoHistory, [3, 4]);
     expect(loaded.vibrationEnabled, isTrue);
+    expect(loaded.goal, AppConstants.defaultGoal);
   });
 }

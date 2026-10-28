@@ -29,3 +29,14 @@ final class CounterResetRequested extends CounterEvent {
 final class CounterVibrationToggled extends CounterEvent {
   const CounterVibrationToggled();
 }
+
+/// Sets the goal the progress ring fills towards. Out-of-range values are
+/// clamped to the allowed range.
+final class CounterGoalChanged extends CounterEvent {
+  const CounterGoalChanged(this.goal);
+
+  final int goal;
+
+  @override
+  List<Object?> get props => [goal];
+}

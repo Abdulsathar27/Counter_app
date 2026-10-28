@@ -31,6 +31,7 @@ class CounterBloc extends Bloc<CounterEvent, CounterState> {
         CounterUndoRequested() => _onUndoRequested(emit),
         CounterResetRequested() => _onResetRequested(emit),
         CounterVibrationToggled() => _onVibrationToggled(emit),
+        CounterGoalChanged(:final goal) => _onGoalChanged(emit, goal),
       },
       transformer: sequential(),
     );
@@ -91,6 +92,18 @@ class CounterBloc extends Bloc<CounterEvent, CounterState> {
     if (enabled) unawaited(_haptics.confirm());
     try {
       await _repository.saveVibrationEnabled(enabled: enabled);
+      if (state.failure != null) emit(state.copyWith(failure: () => null));
+    } on Object {
+      emit(state.copyWith(failure: () => const PersistenceFailure()));
+    }
+  }
+
+  Future<void> _onGoalChanged(Emitter<CounterState> emit, int requested) async {
+    final goal = requested.clamp(AppConstants.minGoal, AppConstants.maxGoal);
+    if (goal == state.goal) return;
+    emit(state.copyWith(counter: state.counter.copyWith(goal: goal)));
+    try {
+      await _repository.saveGoal(goal);
       if (state.failure != null) emit(state.copyWith(failure: () => null));
     } on Object {
       emit(state.copyWith(failure: () => const PersistenceFailure()));

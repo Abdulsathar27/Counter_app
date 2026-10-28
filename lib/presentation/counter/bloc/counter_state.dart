@@ -19,6 +19,11 @@ final class CounterState extends Equatable {
   bool get vibrationEnabled => counter.vibrationEnabled;
   bool get canUndo => counter.undoHistory.isNotEmpty;
   bool get isReady => status == CounterStatus.ready;
+  int get goal => counter.goal;
+  bool get goalReached => count >= goal;
+
+  /// How full the ring is, from 0 to 1. It stays full past the goal.
+  double get progress => (count / goal).clamp(0.0, 1.0);
 
   CounterState copyWith({
     CounterStatus? status,

@@ -3,9 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../../../app/theme/app_dimensions.dart';
 
 /// The reference's line icons (tabler arrow-back-up, tabler refresh, lucide
-/// vibrate / vibrate-off), drawn from their 24×24 SVG paths so the stroke
-/// style matches exactly without an SVG dependency.
-enum LineIconGlyph { undo, reset, vibrate, vibrateOff }
+/// vibrate / vibrate-off, tabler fingerprint, tabler target), drawn from their 24×24 SVG
+/// paths so the stroke style matches exactly without an SVG dependency.
+enum LineIconGlyph { undo, reset, vibrate, vibrateOff, fingerprint, target }
 
 class LineIcon extends StatelessWidget {
   const LineIcon(
@@ -61,6 +61,8 @@ class _LineIconPainter extends CustomPainter {
     LineIconGlyph.reset => _reset,
     LineIconGlyph.vibrate => _vibrate,
     LineIconGlyph.vibrateOff => _vibrateOff,
+    LineIconGlyph.fingerprint => _fingerprint,
+    LineIconGlyph.target => _target,
   };
 
   // m9 14-4-4 4-4 · M5 10h11a4 4 0 1 1 0 8h-1
@@ -121,6 +123,36 @@ class _LineIconPainter extends CustomPainter {
         ..lineTo(10.66, 5)
         ..moveTo(2, 2)
         ..lineTo(22, 22);
+
+  // M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3 · M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6
+  // · M12 11v2a14 14 0 0 0 2.5 8 · M8 15a18 18 0 0 0 1.8 6
+  // · M4.9 19a22 22 0 0 1 -.9 -7v-1a8 8 0 0 1 12 -6.95
+  static final Path _fingerprint =
+      Path()
+        ..moveTo(18.9, 7)
+        ..arcToPoint(const Offset(20, 12), radius: const Radius.circular(8))
+        ..lineTo(20, 13)
+        ..arcToPoint(const Offset(20.8, 16), radius: const Radius.circular(6), clockwise: false)
+        ..moveTo(8, 11)
+        ..arcToPoint(const Offset(16, 11), radius: const Radius.circular(4))
+        ..lineTo(16, 12)
+        ..arcToPoint(const Offset(18, 18), radius: const Radius.circular(10), clockwise: false)
+        ..moveTo(12, 11)
+        ..lineTo(12, 13)
+        ..arcToPoint(const Offset(14.5, 21), radius: const Radius.circular(14), clockwise: false)
+        ..moveTo(8, 15)
+        ..arcToPoint(const Offset(9.8, 21), radius: const Radius.circular(18), clockwise: false)
+        ..moveTo(4.9, 19)
+        ..arcToPoint(const Offset(4, 12), radius: const Radius.circular(22))
+        ..lineTo(4, 11)
+        ..arcToPoint(const Offset(16, 4.05), radius: const Radius.circular(8));
+
+  // circle r1 · circle r5 · circle r9, all at 12 12
+  static final Path _target =
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 1))
+        ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 5))
+        ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 9));
 
   @override
   bool shouldRepaint(_LineIconPainter oldDelegate) =>

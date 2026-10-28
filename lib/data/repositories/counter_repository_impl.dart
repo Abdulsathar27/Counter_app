@@ -18,4 +18,7 @@ class CounterRepositoryImpl implements CounterRepository {
   @override
   Future<void> saveVibrationEnabled({required bool enabled}) =>
       _localDataSource.writeVibrationEnabled(enabled: enabled);
+
+  @override
+  Future<void> saveGoal(int goal) => _localDataSource.writeGoal(goal);
 }

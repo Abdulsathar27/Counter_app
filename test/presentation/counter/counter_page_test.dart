@@ -1,7 +1,9 @@
 import 'package:counter/app/app.dart';
 import 'package:counter/domain/entities/counter_entity.dart';
 import 'package:counter/presentation/counter/bloc/counter_bloc.dart';
-import 'package:counter/presentation/counter/widgets/flip_counter.dart';
+import 'package:counter/presentation/counter/widgets/count_button.dart';
+import 'package:counter/presentation/counter/widgets/goal_ring.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,86 +25,142 @@ void main() {
     return bloc;
   }
 
-  /// The settled counter paints the value on both the upper and lower flap.
-  Finder counterShows(String value) =>
-      find.descendant(of: find.byType(FlipCounter), matching: find.text(value));
+  final ring = find.byType(GoalRing);
 
-  final counter = find.byType(FlipCounter);
+  Finder ringShows(String text) => find.descendant(of: ring, matching: find.text(text));
 
-  testWidgets('shows the saved count on the first frame, before any tap', (tester) async {
-    await pumpApp(tester, saved: const CounterEntity(count: 42));
+  double ringProgress(WidgetTester tester) => tester.widget<GoalRing>(ring).progress;
 
-    expect(counterShows('42'), findsNWidgets(2));
+  /// Only the fingerprint button counts; the ring is display-only.
+  final tapArea = find.byType(CountButton);
+
+  testWidgets('shows the saved count and goal progress on the first frame', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 4, goal: 10));
+
+    expect(ringShows('4'), findsOneWidget);
+    expect(ringShows('6 to go'), findsOneWidget);
+    expect(ringProgress(tester), closeTo(0.4, 1e-9));
     expect(find.text('MUSMILES'), findsOneWidget);
-    expect(find.text('Tap to count'), findsOneWidget);
+    expect(tapArea, findsOneWidget);
   });
 
-  testWidgets('tapping the counter flips to the next number', (tester) async {
-    await pumpApp(tester);
+  testWidgets('tapping the button counts and fills the ring', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 0, goal: 4));
 
-    await tester.tap(counter);
-    await tester.pump(const Duration(milliseconds: 100));
-    // Mid-flip both the outgoing and incoming values are on the card.
-    expect(counterShows('0'), findsWidgets);
-    expect(counterShows('1'), findsWidgets);
-
+    await tester.tap(tapArea);
     await tester.pumpAndSettle();
-    expect(counterShows('1'), findsNWidgets(2));
-    expect(counterShows('0'), findsNothing);
+
+    expect(ringShows('1'), findsOneWidget);
+    expect(ringShows('3 to go'), findsOneWidget);
+    expect(ringProgress(tester), closeTo(0.25, 1e-9));
     expect(repository.stored.count, 1);
+  });
+
+  testWidgets('shows "goal reached" at the goal and stays full past it', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 11, goal: 12));
+
+    await tester.tap(tapArea);
+    await tester.pumpAndSettle();
+    expect(ringShows('12'), findsOneWidget);
+    expect(ringShows('goal reached'), findsOneWidget);
+    expect(ringProgress(tester), 1);
+
+    await tester.tap(tapArea);
+    await tester.pumpAndSettle();
+    expect(ringShows('13'), findsOneWidget);
+    expect(ringShows('goal reached'), findsOneWidget);
+    expect(ringProgress(tester), 1);
+  });
+
+  testWidgets('only the fingerprint button counts, not the ring or the screen', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 5));
+
+    await tester.tap(ring, warnIfMissed: false);
+    await tester.tapAt(tester.getTopLeft(ring) - const Offset(4, 4));
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+    expect(ringShows('5'), findsOneWidget);
+    expect(repository.stored.count, 5);
+
+    await tester.tap(tapArea);
+    await tester.pumpAndSettle();
+    expect(ringShows('6'), findsOneWidget);
+    expect(repository.stored.count, 6);
   });
 
   testWidgets('rapid taps are all counted', (tester) async {
     await pumpApp(tester);
 
     for (var i = 0; i < 12; i++) {
-      await tester.tap(counter);
+      await tester.tap(tapArea);
       await tester.pump(const Duration(milliseconds: 30));
     }
     await tester.pumpAndSettle();
 
-    expect(counterShows('12'), findsNWidgets(2));
+    expect(ringShows('12'), findsOneWidget);
     expect(repository.stored.count, 12);
-  });
-
-  testWidgets('handles the carry from 9 to 10 and 99 to 100', (tester) async {
-    await pumpApp(tester, saved: const CounterEntity(count: 9));
-
-    await tester.tap(counter);
-    await tester.pumpAndSettle();
-    expect(counterShows('10'), findsNWidgets(2));
-
-    await pumpApp(tester, saved: const CounterEntity(count: 99));
-    await tester.tap(counter);
-    await tester.pumpAndSettle();
-    expect(counterShows('100'), findsNWidgets(2));
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('undo and reset controls update the counter', (tester) async {
     await pumpApp(tester, saved: const CounterEntity(count: 7));
 
-    await tester.tap(counter);
+    await tester.tap(tapArea);
     await tester.pumpAndSettle();
-    expect(counterShows('8'), findsNWidgets(2));
+    expect(ringShows('8'), findsOneWidget);
 
     await tester.tap(find.bySemanticsLabel('Undo last count'));
     await tester.pumpAndSettle();
-    expect(counterShows('7'), findsNWidgets(2));
+    expect(ringShows('7'), findsOneWidget);
 
     await tester.tap(find.bySemanticsLabel('Reset count'));
     await tester.pumpAndSettle();
-    expect(counterShows('0'), findsNWidgets(2));
+    expect(ringShows('0'), findsOneWidget);
+    expect(ringProgress(tester), 0);
     expect(repository.stored.count, 0);
   });
 
-  testWidgets('the three controls and the counter are accessible', (tester) async {
+  testWidgets('the goal button sets and saves a new goal', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 5, goal: 10));
+
+    await tester.tap(find.bySemanticsLabel('Set goal. Current goal: 10'));
+    await tester.pumpAndSettle();
+    expect(find.text('Set goal'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '5');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(ringShows('goal reached'), findsOneWidget);
+    expect(ringProgress(tester), 1);
+    expect(repository.stored.goal, 5);
+  });
+
+  testWidgets('the goal dialog rejects zero and can be cancelled', (tester) async {
+    await pumpApp(tester, saved: const CounterEntity(count: 2, goal: 10));
+
+    await tester.tap(find.bySemanticsLabel('Set goal. Current goal: 10'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.pump();
+    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save')).onPressed, isNull);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(ringShows('8 to go'), findsOneWidget);
+    expect(repository.stored.goal, 10);
+  });
+
+  testWidgets('the controls and the ring are accessible', (tester) async {
     final semantics = tester.ensureSemantics();
     await pumpApp(tester, saved: const CounterEntity(count: 3, undoHistory: [2]));
 
     expect(
-      tester.getSemantics(counter),
+      tester.getSemantics(tapArea),
       isSemantics(label: 'Tap to count. Current count: 3.', isButton: true, hasTapAction: true),
+    );
+    expect(
+      tester.getSemantics(ring),
+      isSemantics(label: 'Current count: 3 of 10.', isButton: false, isLiveRegion: true),
     );
     expect(
       tester.getSemantics(find.bySemanticsLabel('Undo last count')),
@@ -110,6 +168,10 @@ void main() {
     );
     expect(
       tester.getSemantics(find.bySemanticsLabel('Reset count')),
+      isSemantics(isButton: true, isEnabled: true, hasTapAction: true),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Set goal. Current goal: 10')),
       isSemantics(isButton: true, isEnabled: true, hasTapAction: true),
     );
     expect(
@@ -136,7 +198,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
-    expect(counterShows('1'), findsNWidgets(2));
+    expect(ringShows('1'), findsOneWidget);
   });
 
   testWidgets('does not overflow on a small screen with large text', (tester) async {
@@ -150,20 +212,20 @@ void main() {
     await pumpApp(tester, saved: const CounterEntity(count: 123456));
 
     expect(tester.takeException(), isNull);
-    expect(counterShows('123456'), findsNWidgets(2));
+    expect(ringShows('123456'), findsOneWidget);
   });
 
-  testWidgets('skips the flip when the platform asks for reduced motion', (tester) async {
+  testWidgets('skips the ring animation when the platform asks for reduced motion', (tester) async {
     tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
       disableAnimations: true,
     );
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     await pumpApp(tester);
 
-    await tester.tap(counter);
+    await tester.tap(tapArea);
     await tester.pump();
 
-    expect(counterShows('1'), findsNWidgets(2));
+    expect(ringShows('1'), findsOneWidget);
     expect(tester.hasRunningAnimations, isFalse);
   });
 }
